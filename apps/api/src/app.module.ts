@@ -5,10 +5,17 @@ import { GraphQLModule } from '@nestjs/graphql'
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
 import { join } from 'path'
 import { ConfigModule } from '@nestjs/config'
-import { UsersModule } from './users/users.module'
+import { PrismaModule } from './common/prisma/prisma.module'
+import { UsersModule } from './models/users/users.module'
+import { JwtModule } from '@nestjs/jwt'
 
+const duration = '24h'
 @Module({
   imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'secret',
+      signOptions: { expiresIn: duration },
+    }),
     ConfigModule.forRoot(),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -19,6 +26,7 @@ import { UsersModule } from './users/users.module'
         numberScalarMode: 'integer',
       },
     }),
+    PrismaModule,
     UsersModule,
   ],
   controllers: [AppController],
