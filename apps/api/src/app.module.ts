@@ -13,6 +13,7 @@ const duration = '24h'
 @Module({
   imports: [
     JwtModule.register({
+      global: true,
       secret: process.env.JWT_SECRET || 'secret',
       signOptions: { expiresIn: duration },
     }),
