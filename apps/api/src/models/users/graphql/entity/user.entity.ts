@@ -9,4 +9,6 @@ export class User implements RestrictProperties<User, UserType> {
   updatedAt: Date
   @Field({ nullable: true })
   name: string
+  @Field({ nullable: true })
+  image: string
 }

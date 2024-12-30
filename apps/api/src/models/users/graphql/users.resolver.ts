@@ -2,7 +2,12 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql'
 import { UsersService } from './users.service'
 import { User } from './entity/user.entity'
 import { FindManyUserArgs, FindUniqueUserArgs } from './dtos/find.args'
-import { CreateUserInput } from './dtos/create-user.input'
+import {
+  LoginInput,
+  LoginOutput,
+  RegisterUserWithCredetialsInput,
+  RegisterUserWithProviderInput,
+} from './dtos/create-user.input'
 import { UpdateUserInput } from './dtos/update-user.input'
 import { checkRowLevelPermission } from 'src/common/auth/util'
 import { GetUserType } from 'src/common/types'
@@ -18,12 +23,29 @@ export class UsersResolver {
 
   // @AllowAuthenticated()
   @Mutation(() => User)
-  createUser(
-    @Args('createUserInput') args: CreateUserInput,
-    @GetUser() user: GetUserType,
+  async RegisterUserWithCredentials(
+    @Args('RegisterUserWithCredetialsInput')
+    args: RegisterUserWithCredetialsInput,
   ) {
-    checkRowLevelPermission(user, args.uid)
-    return this.usersService.create(args)
+    try {
+      const user = this.usersService.registerUserWithCredetials(args)
+      return user
+    } catch (error) {
+      throw new Error(error)
+    }
+  }
+
+  @Mutation(() => User)
+  async RegisterUserWithProvider(
+    @Args('RegisterUserWithProviderInput')
+    args: RegisterUserWithProviderInput,
+  ) {
+    try {
+      const user = this.usersService.registerUserWithProvider(args)
+      return user
+    } catch (error) {
+      throw new Error(error)
+    }
   }
 
   @Query(() => [User], { name: 'users' })
@@ -36,6 +58,12 @@ export class UsersResolver {
   findOne(@Args() args: FindUniqueUserArgs, @GetUser() user: GetUserType) {
     checkRowLevelPermission(user, args.where.uid)
     return this.usersService.findOne(args)
+  }
+
+  @AllowAuthenticated()
+  @Query(() => User)
+  whoami(@GetUser() user: GetUserType) {
+    return this.usersService.findOne({ where: { uid: user.uid } })
   }
 
   @AllowAuthenticated()
@@ -60,5 +88,10 @@ export class UsersResolver {
     const userdata = await this.prisma.user.findUnique(args)
     checkRowLevelPermission(user, user.uid)
     return this.usersService.remove(args)
+  }
+
+  @Mutation(() => LoginOutput)
+  async login(@Args('loginInput') args: LoginInput) {
+    return this.usersService.login(args)
   }
 }
